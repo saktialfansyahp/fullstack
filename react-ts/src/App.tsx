@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 // import logo from "./logo.svg";
 // import "./App.css";
-import Header from "./components/header";
 import {
     BrowserRouter,
     Route,
@@ -9,19 +8,20 @@ import {
     useLocation,
     useNavigate,
 } from "react-router-dom";
-import Home from "./pages/home";
-import About from "./pages/about";
-import Signin from "./pages/signin";
 import PrivateRoute from "./routes/private_route";
 import axios from "axios";
 import { API_URL } from "./lib/global";
+import { ProgressSpinner } from "primereact/progressspinner";
+import routes from "./routes/routes";
 
 const Layout: React.FC = () => {
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
     useEffect(() => {
         const verifyToken = async () => {
+            setIsLoading(true);
             const token = localStorage.getItem("token");
             if (token) {
                 await axios
@@ -32,25 +32,40 @@ const Layout: React.FC = () => {
                     })
                     .then((response) => {
                         setIsAuthenticated(true);
-                        // navigate("/");
+                        if (location.pathname === "/login") {
+                            navigate("/");
+                        }
                     })
                     .catch((err) => {
                         localStorage.removeItem("token");
+                        setIsLoading(false);
                         setIsAuthenticated(false);
                         // navigate("/login");
+                    })
+                    .finally(() => {
+                        // console.log(location.pathname);
+
+                        // navigate("/");
+                        setIsLoading(false);
                     });
+            } else {
+                localStorage.removeItem("token");
+                setIsLoading(false);
+                setIsAuthenticated(false);
+                // navigate("/login");
             }
         };
         verifyToken();
-    }, [location]);
+    }, [location.pathname, navigate]);
 
-    const login = async () => {
+    const login = async (email: string, password: string) => {
+        setIsLoading(true);
         await axios
             .post(
                 `${API_URL}/api/auth/login`,
                 {
-                    email: "alfan@gmail.com",
-                    password: "alfan123",
+                    email: email,
+                    password: password,
                 },
                 {
                     headers: {
@@ -63,10 +78,13 @@ const Layout: React.FC = () => {
                 localStorage.setItem("token", token);
                 localStorage.setItem("isAuthenticated", "true");
                 setIsAuthenticated(true);
-                navigate("/");
+                navigate("/home");
             })
             .catch((err) => {
                 return err;
+            })
+            .finally(() => {
+                setIsLoading(false);
             });
     };
     const logout = () => {
@@ -76,38 +94,51 @@ const Layout: React.FC = () => {
         navigate("/login");
     };
 
+    // console.log(isLoading);
+
     return (
-        <>
+        <div className="bg-gray-100">
+            {/* <Sidebar /> */}
+
             {/* Conditionally render Header based on current route */}
             {/* {!noHeaderRoutes.includes(location.pathname) && <Header />} */}
-            <PrivateRoute isAuthenticated={isAuthenticated}>
+            {/* <PrivateRoute isAuthenticated={isAuthenticated}>
                 <Header isAuthenticated={isAuthenticated} onLogout={logout} />
-            </PrivateRoute>
+            </PrivateRoute> */}
 
             {/* Main content */}
-            <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                <Routes>
-                    <Route
-                        path="/"
-                        element={
-                            <PrivateRoute isAuthenticated={isAuthenticated}>
-                                <Home />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route
-                        path="about"
-                        element={
-                            <PrivateRoute isAuthenticated={isAuthenticated}>
-                                <About />
-                            </PrivateRoute>
-                        }
-                    />
-                    <Route path="login" element={<Signin onLogin={login} />} />
-                    {/* Add more routes here */}
-                </Routes>
+            <div className="min-h-screen mx-auto">
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-screen">
+                        <ProgressSpinner />
+                    </div>
+                ) : (
+                    <Routes>
+                        {routes.map((route, index) => {
+                            // Buat elemen komponen dengan props jika diperlukan
+                            const Element = route.isPrivate ? (
+                                <PrivateRoute
+                                    logout={logout}
+                                    isAuthenticated={isAuthenticated}
+                                >
+                                    <route.component onLogin={login} />
+                                </PrivateRoute>
+                            ) : (
+                                <route.component onLogin={login} />
+                            );
+
+                            return (
+                                <Route
+                                    key={index}
+                                    path={route.path}
+                                    element={Element}
+                                />
+                            );
+                        })}
+                    </Routes>
+                )}
             </div>
-        </>
+        </div>
     );
 };
 
@@ -118,24 +149,4 @@ const App: React.FC = () => {
         </BrowserRouter>
     );
 };
-// function App() {
-//     return (
-//         <div className="App">
-//             <Header />
-//             {/* <header className="App-header">
-//                 <div className="bg-white dark:bg-slate-800 rounded-lg px-6 py-8 ring-1 ring-slate-900/5 shadow-xl">
-//                     <h3 className="text-slate-900 dark:text-white mt-5 text-base font-medium tracking-tight">
-//                         Writes Upside-Down
-//                     </h3>
-//                     <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
-//                         The Zero Gravity Pen can be used to write in any
-//                         orientation, including upside-down. It even works in
-//                         outer space.
-//                     </p>
-//                 </div>
-//             </header> */}
-//         </div>
-//     );
-// }
-
 export default App;

@@ -11,6 +11,17 @@ code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
         monospace;
 } */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer tailwind-base, primereact, tailwind-utilities;
+
+/* @import "primeflex/primeflex.css";
+@import "primereact/resources/primereact.css"; */
+@import "primereact/resources/themes/lara-light-indigo/theme.css";
+
+@layer tailwind-base {
+    @tailwind base;
+}
+
+@layer tailwind-utilities {
+    @tailwind components;
+    @tailwind utilities;
+}
