@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react"
 // import logo from "./logo.svg";
 // import "./App.css";
 import {
@@ -137,6 +138,7 @@ const Layout: React.FC = () => {
                         })}
                     </Routes>
                 )}
+		<SpeedInsights />
             </div>
         </div>
     );
